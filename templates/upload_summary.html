@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Summary Report</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        .section { margin-bottom: 25px; }
+        ul { margin: 5px 0; padding-left: 20px; max-height: 180px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; width: 550px; }
+        .imported { color: #080; }
+        .duplicate { color: #666; }
+        .conflict { color: #c00; }
+        .conflict-box { border: 1px solid #c00; background: #fff5f5; padding: 10px; width: 550px; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <h2>Excel Import Summary Report</h2>
+
+    <div class="section">
+        <h3 class="imported">Successfully Imported: {{ imported | length }} Work Orders</h3>
+        {% if imported %}
+            <ul>
+                {% for wo in imported %}<li>{{ wo }}</li>{% endfor %}
+            </ul>
+        {% else %}
+            <p>No new work orders added.</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h3 class="duplicate">Exact Duplicates Skipped: {{ duplicates | length }}</h3>
+        {% if duplicates %}
+            <ul>
+                {% for wo in duplicates %}<li>{{ wo }}</li>{% endfor %}
+            </ul>
+        {% else %}
+            <p>No exact duplicates found.</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h3 class="conflict">⚠️ Data Conflicts Detected: {{ conflicts | length }}</h3>
+        {% if conflicts %}
+            <p><small>These Work Order numbers already exist in the database, but have <strong>different details</strong> in your Excel file:</small></p>
+            {% for c in conflicts %}
+                <div class="conflict-box">
+                    <strong>Work Order: {{ c.wo }}</strong><br>
+                    <span style="color: #c00;">Excel: {{ c.excel_info }}</span><br>
+                    <span style="color: #006;">Database: {{ c.db_info }} </span>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No conflicting work orders found.</p>
+        {% endif %}
+    </div>
+
+    <p style="margin-top: 20px;">
+        <a href="index.html">[ Return to Dashboard ]</a>
+    </p>
+
+</body>
+</html>

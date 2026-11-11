@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Service Reports Dashboard</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        table, th, td { border: 1px solid black; border-collapse: collapse; padding: 6px; }
+        a.wo-link { font-weight: bold; color: #0056b3; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <h2>Work Orders & Service Logs</h2>
+    <p>
+        <a href="/add">[ + New Work Order ]</a>
+        <form id="autoForm" action="/upload" method="POST" enctype="multipart/form-data">
+            <label style="cursor: pointer; color: blue; text-decoration: underline;" for="excel-upload">[ + Choose Excel File ]</label>
+            <input 
+                type="file" 
+                id="excel-upload" 
+                name="excel-upload" 
+                accept=".xlsx, .xls" 
+                style="display: none;"
+                onchange="document.getElementById('autoForm').submit();"
+            />
+        </form>
+        
+        <dialog id="poppup">
+            <p> Uploaded :</p>
+            <span id="file-name-display"></span>
+            <button id="closeBtn">Close</button>
+        </dialog>
+        
+    </p>
+    <p></p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>WO No</th>
+                <th>Date</th>
+                <th>Customer Address / Contact</th>
+                <th>Unit</th>
+                <th>Brand / Model (S/N)</th>
+                <th>Fault Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if orders %}
+                {% for o in orders %}
+                <tr>
+                    <td>
+                        <a href="/edit/{{ o.id }}" class="wo-link">{{ o.work_order_no }}</a>
+                    </td>
+                    <td>{{ o.date }}</td>
+                    <td>{{ o.customer.customer_address }}<br><small>{{ o.customer.customer_name }}</small></td>
+                    <td>{{ o.device.unit_description }}</td>
+                    <td>{{ o.device.brand }} / {{ o.device.model }} <br><small>S/N: {{ o.device.serial_number }}</small></td>
+                    <td>{{ o.breakdown }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6">No reports logged.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    <script>
+        const fileInput = document.getElementById('excel-upload');
+        const nameDisplay = document.getElementById('file-name-display');
+
+        fileInput.addEventListener('change', function(e) {
+
+            if (this.files && this.files.length > 0) {
+                const originalName = this.files[0].name; 
+                const maxLength = 15;
+
+
+                const displayName = originalName.length > maxLength
+                ? originalName.substring(0,maxLength) + "..."
+                :originalName;
+
+                nameDisplay.textContent = `"${displayName}"`;
+                if (displayName.length > 0){
+                    poppup.showModal();
+                
+                }
+                document.getElementById('closeBtn').addEventListener('click', () => {
+                    poppup.close();
+                });
+            }
+        });
+        const form = document.getElementById("autoForm");
+        // Example: Submit automatically when an input changes
+        form.addEventListener("input", () => {
+            form.requestSubmit();
+        });
+
+    </script>
+
+</body>
+</html>

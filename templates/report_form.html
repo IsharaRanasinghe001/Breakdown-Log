@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if order %}Modify Work Order{% else %}Technical Service Form{% endif %}</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        .form-section { border: 1px solid #000; padding: 10px; margin-bottom: 15px; }
+        .form-row { margin-bottom: 8px; }
+        label { display: inline-block; width: 180px; font-weight: bold; }
+        input[type="text"], input[type="date"], textarea { width: 350px; }
+        input[readonly] { background-color: #eee; color: #555; }
+        textarea { height: 60px; vertical-align: top; }
+        button { margin-top: 10px; padding: 5px 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h2>{% if order %}Modify Work Order #{{ order.work_order_no }}{% else %}Technical Service Report Entry{% endif %}</h2>
+
+    <!-- Explicitly target the correct route URL depending on mode -->
+    <form action="{% if order %}/edit/{{ order.id }}{% else %}/add{% endif %}" method="POST">
+        
+        <!-- Job Details -->
+        <div class="form-section">
+            <div class="form-row">
+                <label>Work Order No:</label>
+                <!-- Locked (readonly) if modifying an existing record -->
+                <input type="text" name="work_order_no" class="nav-input" data-row="0" data-col="0" 
+                       value="{{ order.work_order_no if order else '' }}" 
+                       {% if order %}readonly{% else %}autofocus required{% endif %}>
+            </div>
+            <div class="form-row">
+                <label>Date:</label>
+                <input type="date" name="date" class="nav-input" data-row="1" data-col="0" 
+                       value="{{ order.date if order else '' }}" required {% if order %}autofocus{% endif %}>
+            </div>
+        </div>
+
+        <!-- Customer Information -->
+        <div class="form-section">
+            <h3>Customer Details</h3>
+            <div class="form-row">
+                <label>Customer Address:</label>
+                <input type="text" name="customer_address" class="nav-input" data-row="2" data-col="0" 
+                       list="address-list"
+                       value="{{ order.customer.customer_address if order else 'Colombo South Teaching Hospital' }}">
+                <datalist id="address-list">
+                    {% for addr in sug.addresses %}<option value="{{ addr }}">{% endfor %}
+                </datalist>
+            </div>
+            <div class="form-row">
+                <label>Customer Name & Desig:</label>
+                <input type="text" name="customer_name" class="nav-input" data-row="3" data-col="0" 
+                       list="name-list"
+                       value="{{ order.customer.customer_name if order else '' }}">
+                <datalist id="name-list">
+                    {% for name in sug.names %}<option value="{{ name }}">{% endfor %}
+                </datalist>
+            </div>
+            <div class="form-row">
+                <label>Contact Number:</label>
+                <input type="text" name="contact_number" class="nav-input" data-row="4" data-col="0" 
+                       value="{{ order.customer.contact_number if order else '' }}">
+            </div>
+        </div>
+
+        <!-- Equipment Details -->
+        <div class="form-section">
+            <h3>Unit Category & Details</h3>
+            <div class="form-row">
+                <label>Unit Description:</label>
+                <input type="text" name="unit_description" class="nav-input" data-row="5" data-col="0" 
+                       list="unit-list"
+                       value="{{ order.device.unit_description if order else '' }}">
+                <datalist id="unit-list">
+                    {% for unit in sug.units %}<option value="{{ unit }}">{% endfor %}
+                </datalist>
+            </div>
+            <div class="form-row">
+                <label>Brand:</label>
+                <input type="text" name="brand" class="nav-input" data-row="6" data-col="0" 
+                       list="brand-list"
+                       value="{{ order.device.brand if order else '' }}">
+                <datalist id="brand-list">
+                    {% for brand in sug.brands %}<option value="{{ brand }}">{% endfor %}
+                </datalist>
+            </div>
+            <div class="form-row">
+                <label>Model:</label>
+                <input type="text" name="model" class="nav-input" data-row="7" data-col="0" 
+                       list="model-list"
+                       value="{{ order.device.model if order else '' }}">
+                <datalist id="model-list">
+                    {% for model in sug.models %}<option value="{{ model }}">{% endfor %}
+                </datalist>
+            </div>
+            <div class="form-row">
+                <label>Serial Number:</label>
+                <input type="text" name="serial_number" class="nav-input" data-row="8" data-col="0" 
+                       value="{{ order.device.serial_number if order else '' }}">
+            </div>
+        </div>
+
+        <!-- Technical Work Details -->
+        <div class="form-section">
+            <h3>Service Details</h3>
+            <div class="form-row">
+                <label>Breakdown / Fault:</label>
+                <textarea name="breakdown" class="nav-input" data-row="9" data-col="0">{{ order.breakdown if order else '' }}</textarea>
+            </div>
+            <div class="form-row">
+                <label>Work Carried Out:</label>
+                <textarea name="work_carried_out" class="nav-input" data-row="10" data-col="0">{{ order.work_carried_out if order else '' }}</textarea>
+            </div>
+            <div class="form-row">
+                <label>Spare Items Used:</label>
+                <textarea name="spare_item" class="nav-input" data-row="11" data-col="0">{{ order.spare_item if order else '' }}</textarea>
+            </div>
+        </div>
+
+        <div>
+            <button type="submit">{% if order %}Modify Report{% else %}Submit Work Order{% endif %}</button>
+            
+            {% if order %}
+                <button type="submit" name="delete_btn" value="true" style="background-color: #ffcccc; color: #900;" 
+                        onclick="return confirm('WARNING: Are you sure you want to permanently delete Work Order {{ order.work_order_no }}?');">
+                    Delete Report
+                </button>
+            {% endif %}
+
+            <a href="/" style="margin-left: 10px;">Back to Main</a>
+        </div>
+
+    </form>
+
+    <script>
+        document.addEventListener("keydown", function(event) {
+            const active = document.activeElement;
+            if (!active.classList.contains("nav-input")) return;
+
+            const isTextArea = active.tagName === "TEXTAREA";
+            let currentRow = parseInt(active.getAttribute("data-row"), 10);
+            let nextRow = currentRow;
+
+            if (event.key === "ArrowUp") {
+                if (isTextArea && !event.shiftKey) return;
+                nextRow = currentRow - 1;
+            } else if (event.key === "ArrowDown") {
+                if (isTextArea && !event.shiftKey) return;
+                nextRow = currentRow + 1;
+            } else {
+                return;
+            }
+
+            const target = document.querySelector(`.nav-input[data-row="${nextRow}"]`);
+            if (target) {
+                event.preventDefault();
+                target.focus();
+            }
+        });
+    </script>
+
+</body>
+</html>
